@@ -44,6 +44,7 @@ function App() {
     try {
       const res = await axios.get(`${baseUrl}/v2/api/${apiPath}/admin/products`)
       setProducts(res.data.products);
+      console.log(res.data.products);
     } catch (error) {
       console.log('取得資料失敗')
     }
@@ -76,18 +77,40 @@ function App() {
         })
     }
   }
-  // 從cookie取得token並設置預設header
-  const authToken = document.cookie.replace(
-    /(?:(?:^|.*;\s*)eToken\s*\=\s*([^;]*).*$)|^.*$/,
-    "$1",
-  );
-  axios.defaults.headers.common['Authorization'] = authToken;
+  // 修正：刪除此段
+  // // 從cookie取得token並設置預設header
+  // const authToken = document.cookie.replace(
+  //   /(?:(?:^|.*;\s*)eToken\s*\=\s*([^;]*).*$)|^.*$/,
+  //   "$1",
+  // );
+  // axios.defaults.headers.common['Authorization'] = authToken;
+
+  // 修正內容：在登入頁面戳API檢查是否登入，這樣重新整理就不需要重新輸入資料
+  const checkUserLogin = async () => {
+    try {
+      await axios.post(`${baseUrl}/v2/api/user/check`);
+      getProductData();
+      setIsAuth(true);
+    } catch (error) {
+      console.error('請重新登入');
+    }
+  }
+  // 在登入畫面渲染時呼叫檢查登入的API
+  useEffect(() => {
+    const authToken = document.cookie.replace(
+      /(?:(?:^|.*;\s*)eToken\s*\=\s*([^;]*).*$)|^.*$/,
+      "$1",
+    );
+    axios.defaults.headers.common['Authorization'] = authToken;
+    checkUserLogin();
+  }, [])
+
   // 取得的DOM new建立實例
   useEffect(() => {
     new Modal(productModalRef.current, {
       backdrop: false,
     })
-    new Modal(deleteModalRef.current,{
+    new Modal(deleteModalRef.current, {
       backdrop: true
     })
   }, [])
@@ -129,14 +152,15 @@ function App() {
       imagesUrl: newImages
     })
   }
-  // 新增產品API
+  // 新增產品API 這裡修正：在新增修改API存成 1 : 0
   const createProduct = async () => {
     try {
       await axios.post(`${baseUrl}/v2/api/${apiPath}/admin/product`, {
         data: {
           ...tempProduct,
           origin_price: Number(tempProduct.origin_price),
-          price: Number(tempProduct.price)
+          price: Number(tempProduct.price),
+          is_enabled: tempProduct.is_enabled ? 1 : 0,
         }
       })
       handleMessageSuccess('新增產品');
@@ -144,14 +168,15 @@ function App() {
       handleMessageFail('新增產品');
     }
   }
-  // 編輯產品API
+  // 編輯產品API 這裡修正：在新增修改API存成 1 : 0
   const editProduct = async () => {
     try {
       await axios.put(`${baseUrl}/v2/api/${apiPath}/admin/product/${tempProduct.id}`, {
         data: {
           ...tempProduct,
           origin_price: Number(tempProduct.origin_price),
-          price: Number(tempProduct.price)
+          price: Number(tempProduct.price),
+          is_enabled: tempProduct.is_enabled ? 1 : 0,
         }
       })
       handleMessageSuccess('更新產品');
@@ -236,7 +261,7 @@ function App() {
                 <td>{product.is_enabled ? (<p className='text-success'>是</p>) : (<p className='text-danger'>否</p>)}</td>
                 <td><div className="btn-group">
                   <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => { handleOpenModal('edit', product) }}>編輯</button>
-                  <button onClick={() => {handleOpenDeleteModal(product)}} type="button" className="btn btn-outline-danger btn-sm">刪除</button>
+                  <button onClick={() => { handleOpenDeleteModal(product) }} type="button" className="btn btn-outline-danger btn-sm">刪除</button>
                 </div></td>
               </tr>
             ))}
@@ -441,7 +466,8 @@ function App() {
                 <div className="form-check">
                   <input
                     onChange={handleProductModalInput}
-                    checked={tempProduct.is_enabled ? 1 : 0}
+                    // checked={tempProduct.is_enabled ? 1 : 0}
+                    checked={tempProduct.is_enabled}
                     name="is_enabled"
                     type="checkbox"
                     className="form-check-input"
