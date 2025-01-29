@@ -44,7 +44,6 @@ function App() {
     try {
       const res = await axios.get(`${baseUrl}/v2/api/${apiPath}/admin/products`)
       setProducts(res.data.products);
-      console.log(res.data.products);
     } catch (error) {
       console.log('取得資料失敗')
     }
