@@ -91,10 +91,7 @@ function App() {
       getProductData();
       setIsAuth(true);
     } catch (error) {
-      Swal.fire({
-        text: "請重新登入",
-        icon: "warning"
-      })
+      console.error('請重新登入');
     }
   }
   // 在登入畫面渲染時呼叫檢查登入的API
