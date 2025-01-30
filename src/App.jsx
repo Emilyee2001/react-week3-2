@@ -91,7 +91,10 @@ function App() {
       getProductData();
       setIsAuth(true);
     } catch (error) {
-      console.error('請重新登入');
+      Swal.fire({
+        text: "請重新登入",
+        icon: "warning"
+      })
     }
   }
   // 在登入畫面渲染時呼叫檢查登入的API
@@ -154,7 +157,7 @@ function App() {
   // 新增產品API 這裡修正：在新增修改API存成 1 : 0
   const createProduct = async () => {
     try {
-      await axios.post(`${baseUrl}/v2/api/${apiPath}/admin/product`, {
+      const res = await axios.post(`${baseUrl}/v2/api/${apiPath}/admin/product`, {
         data: {
           ...tempProduct,
           origin_price: Number(tempProduct.origin_price),
@@ -162,15 +165,17 @@ function App() {
           is_enabled: tempProduct.is_enabled ? 1 : 0,
         }
       })
-      handleMessageSuccess('新增產品');
+      handleResultAlert('success', res.data.message);
+      getProductData();
+      handleCloseModal();
     } catch (error) {
-      handleMessageFail('新增產品');
+      handleResultAlert('error', error.response.data.message);
     }
   }
   // 編輯產品API 這裡修正：在新增修改API存成 1 : 0
   const editProduct = async () => {
     try {
-      await axios.put(`${baseUrl}/v2/api/${apiPath}/admin/product/${tempProduct.id}`, {
+      const res = await axios.put(`${baseUrl}/v2/api/${apiPath}/admin/product/${tempProduct.id}`, {
         data: {
           ...tempProduct,
           origin_price: Number(tempProduct.origin_price),
@@ -178,9 +183,11 @@ function App() {
           is_enabled: tempProduct.is_enabled ? 1 : 0,
         }
       })
-      handleMessageSuccess('更新產品');
+      handleResultAlert('success', res.data.message);
+      getProductData();
+      handleCloseModal();
     } catch (error) {
-      handleMessageFail('更新產品');
+      handleResultAlert('error', error.response.data.message);
     }
   }
   // 處理確認新增or編輯產品
@@ -189,22 +196,11 @@ function App() {
   }
 
   // 處理新增或編輯成功失敗
-  const handleMessageSuccess = (mode) => {
-    getProductData();
-    handleCloseModal();
+  const handleResultAlert = (icon, text) => {
     Swal.fire({
       position: "top-end",
-      icon: "success",
-      text: `${mode}成功`,
-      showConfirmButton: false,
-      timer: 1500
-    });
-  }
-  const handleMessageFail = (mode) => {
-    Swal.fire({
-      position: "top-end",
-      icon: "error",
-      text: `${mode}失敗`,
+      icon,
+      text,
       showConfirmButton: false,
       timer: 1500
     });
@@ -212,11 +208,12 @@ function App() {
   // 刪除產品API
   const deleteProduct = async () => {
     try {
-      await axios.delete(`${baseUrl}/v2/api/${apiPath}/admin/product/${tempProduct.id}`);
-      handleMessageSuccess('刪除產品');
+      const res = await axios.delete(`${baseUrl}/v2/api/${apiPath}/admin/product/${tempProduct.id}`);
+      handleResultAlert('success', res.data.message);
+      getProductData();;
       handleCloseDeleteModal();
     } catch (error) {
-      handleMessageFail('刪除產品');
+      handleResultAlert('error', error.response.data.message);
     }
   }
   // 處理刪除產品打開關閉
@@ -414,6 +411,7 @@ function App() {
                       type="number"
                       className="form-control"
                       placeholder="請輸入原價"
+                      min={0}
                     />
                   </div>
                   <div className="col-6">
@@ -428,6 +426,7 @@ function App() {
                       type="number"
                       className="form-control"
                       placeholder="請輸入售價"
+                      min={0}
                     />
                   </div>
                 </div>
